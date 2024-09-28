@@ -1,0 +1,1 @@
+export const filterEmptyStr = (k: string) => k !== ''
