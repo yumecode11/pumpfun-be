@@ -3,6 +3,10 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import multer from "multer";
 import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
+import { mongoClient } from "db/mongo";
+
+const db = mongoClient.db("dump_fun"); // TODO: this should be configurable
+const coinsCollection = db.collection("coins");
 
 const s3 = new S3Client({
   region: process.env.AWS_REGION!,
@@ -15,7 +19,7 @@ const s3 = new S3Client({
 // Temporary file will be store in /uploads
 const upload = multer({ dest: "uploads/" });
 
-export default async (req: Request, res: Response): Promise<void> => {
+export default async (req: Request, res: Response) => {
   try {
     const uploadSingle = upload.single("image");
 
@@ -66,12 +70,16 @@ export default async (req: Request, res: Response): Promise<void> => {
           website,
         };
 
-        // TODO: save to database
+        try {
+          const result = await coinsCollection.insertOne(newCoin);
+          // Delete temporary file after upload
+          fs.unlinkSync(req.file.path);
 
-        // Delete temporary file after upload
-        fs.unlinkSync(req.file.path);
-
-        return res.status(201).json({ message: "Success", data: true });
+          return res.status(200).json({ message: "Success", data: result.insertedId });
+        } catch (error) {
+          console.error("Error saving coin to MongoDB:", error);
+          return res.status(500).json({ error: "Error saving coin to database" });
+        }
       } catch (error) {
         // TODO: logger for error uploading to s3
         return res.status(500).json({ error: "Error uploading to s3" });
@@ -79,6 +87,6 @@ export default async (req: Request, res: Response): Promise<void> => {
     });
   } catch (error) {
     // TODO: logger for error
-    res.status(500).json({ error: "Internal Server Error" });
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
