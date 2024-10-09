@@ -5,3 +5,5 @@ export { default as verify } from './auth/verify'
 export { default as session } from './auth/session'
 
 export { default as upload } from './upload';
+
+export { default as createCoin } from './create-coin';

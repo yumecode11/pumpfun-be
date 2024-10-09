@@ -1,92 +1,40 @@
 import { Request, Response } from "express";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import multer from "multer";
-import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
-import { mongoClient } from "db/mongo";
+import { mongoClient } from "../db/mongo";
 
 const db = mongoClient.db("dump_fun"); // TODO: this should be configurable
 const coinsCollection = db.collection("coins");
 
-const s3 = new S3Client({
-  region: process.env.AWS_REGION!,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY!,
-    secretAccessKey: process.env.AWS_SECRET_KEY!,
-  },
-});
+const createCoin = async (req: Request, res: Response) => {
+  const { name, ticker, description, twitter, telegram, website } = req.body;
+  // Payload to create new coin
+  const newCoin = {
+    name,
+    ticker,
+    description,
+    image: 'https://picsum.photos/128/128',
+    twitter,
+    telegram,
+    website,
+    marketCap: 0,
+    replies: [],
+    trades: [],
+    created_at: new Date(),
+    created_by: "user_id_0",
+  };
 
-// Temporary file will be store in /uploads
-const upload = multer({ dest: "uploads/" });
-
-export default async (req: Request, res: Response) => {
   try {
-    const uploadSingle = upload.single("image");
+    const result = await coinsCollection.insertOne(newCoin);
 
-    // Upload file first
-    uploadSingle(req, res, async (err: any) => {
-      if (err) {
-        return res.status(400).json({ error: "Error uploading file" });
-      }
-
-      const { name, ticker, description, twitter, telegram, website } =
-        req.body;
-
-      if (!name || !ticker || !description) {
-        return res
-          .status(400)
-          .json({ error: "Name, ticker, and description are required." });
-      }
-
-      if (!req.file) {
-        return res.status(400).json({ error: "Image is required." });
-      }
-
-      const fileContent = fs.readFileSync(req.file.path);
-      const fileName = `${uuidv4()}-${req.file.originalname}`;
-
-      // Payload for uploading to S3
-      const params = {
-        Bucket: process.env.S3_BUCKET_NAME!,
-        Key: fileName,
-        Body: fileContent,
-        ContentType: req.file.mimetype,
-        ACL: "public-read",
-      };
-
-      try {
-        await s3.send(new PutObjectCommand(params));
-
-        const imageUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
-
-        // Payload to create new coin
-        const newCoin = {
-          name,
-          ticker,
-          description,
-          image: imageUrl,
-          twitter,
-          telegram,
-          website,
-        };
-
-        try {
-          const result = await coinsCollection.insertOne(newCoin);
-          // Delete temporary file after upload
-          fs.unlinkSync(req.file.path);
-
-          return res.status(200).json({ message: "Success", data: result.insertedId });
-        } catch (error) {
-          console.error("Error saving coin to MongoDB:", error);
-          return res.status(500).json({ error: "Error saving coin to database" });
-        }
-      } catch (error) {
-        // TODO: logger for error uploading to s3
-        return res.status(500).json({ error: "Error uploading to s3" });
-      }
-    });
+    return res.status(200).json({ message: "Success", data: result.insertedId });
   } catch (error) {
-    // TODO: logger for error
-    return res.status(500).json({ error: "Internal Server Error" });
+    return res.status(500).json({ error: "Error saving coin to database" });
+  } finally {
+    // Delete temporary file
+    if (req.file) {
+      fs.unlinkSync(req.file.path);
+    }
   }
 };
+
+export default createCoin;

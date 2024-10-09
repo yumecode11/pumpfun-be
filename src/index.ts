@@ -31,6 +31,8 @@ import './utils/message';
 import process from "process";
 import redisClient from "./lib/redis";
 
+import dummyUpload from './utils/dummyUpload'; // TODO: remove this once we are able to upload to s3
+
 declare module 'express-session' {
     interface SessionData {
         wallet: string
@@ -194,6 +196,7 @@ app.get('/session', routes.session)
 app.post('/login', routes.login)
 app.post('/logout', routes.logout)
 app.post('/verify', routes.verify)
+app.post('/create-coin', dummyUpload.single('image'), routes.createCoin)
 
 // use auth middleware for all endpoints below
 app.use(authMiddleware)
