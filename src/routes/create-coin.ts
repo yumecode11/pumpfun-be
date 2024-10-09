@@ -26,7 +26,7 @@ const createCoin = async (req: Request, res: Response) => {
   try {
     const result = await coinsCollection.insertOne(newCoin);
 
-    return res.status(200).json({ message: "Success", data: result.insertedId });
+    return res.status(200).json({ message: "Coin created successfully", data: result.insertedId });
   } catch (error) {
     return res.status(500).json({ error: "Error saving coin to database" });
   } finally {
