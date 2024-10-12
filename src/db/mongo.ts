@@ -1,15 +1,19 @@
 import { MongoClient } from "mongodb";
+import logger from "../utils/logger";
 
-const uri = "mongodb://localhost:27017";
+const uri = process.env.MONGODB_URI as string;
 const mongoClient = new MongoClient(uri);
+
+const dbName = process.env.DB_NAME as string;
+const db = mongoClient.db(dbName);
 
 const connectMongo = async () => {
   try {
     await mongoClient.connect();
-    console.log("Connected to MongoDB");
+    logger.info("Connected to MongoDB");
   } catch (error) {
-    console.error("Error connecting to MongoDB:", error);
+    logger.error("Error connecting to MongoDB:", error);
   }
 };
 
-export { mongoClient, connectMongo };
+export { mongoClient, connectMongo, db };

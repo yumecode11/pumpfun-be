@@ -1,8 +1,7 @@
 import { Request, Response } from "express";
 import fs from "fs";
-import { mongoClient } from "../db/mongo";
+import { db } from "../db/mongo";
 
-const db = mongoClient.db("dump_fun"); // TODO: this should be configurable
 const coinsCollection = db.collection("coins");
 
 const createCoin = async (req: Request, res: Response) => {
