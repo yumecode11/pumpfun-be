@@ -31,6 +31,8 @@ import './utils/message';
 import process from "process";
 import redisClient from "./lib/redis";
 
+import dummyUpload from './utils/dummyUpload'; // TODO: remove this once we are able to upload to s3
+
 declare module 'express-session' {
     interface SessionData {
         wallet: string
@@ -194,9 +196,23 @@ app.get('/session', routes.session)
 app.post('/login', routes.login)
 app.post('/logout', routes.logout)
 app.post('/verify', routes.verify)
+app.get('/search-coins', routes.searchCoins)
+app.get('/coin', routes.coin)
+app.get('/top-coin', routes.topCoin)
+app.get('/latest-transaction', routes.latestTransaction)
+app.get('/latest-coin-created', routes.latestCoinCreated)
+app.get('/users-to-follow', routes.usersToFollow)
+app.get('/user-profile', routes.userProfile)
 
 // use auth middleware for all endpoints below
 app.use(authMiddleware)
+app.post('/create-coin', dummyUpload.single('image'), routes.createCoin)
+app.post('/buy', routes.buy)
+app.post('/sell', routes.sell)
+app.post('/post-comment', routes.postComment)
+app.post('/post-contract-address', routes.postContractAddress)
+app.post('/update-user-profile', routes.updateUserProfile)
+app.post('/follow', routes.follow)
 
 // Only rate limit the long running operations
 app.use(limiter)
