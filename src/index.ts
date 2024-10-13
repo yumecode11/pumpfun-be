@@ -112,12 +112,13 @@ const sessionMiddleware = session({
     secret: process.env.COOKIE_SECRET as string,
     store: MongoStore.create({
         mongoUrl: process.env.MONGODB_URI,
+        dbName: process.env.DB_NAME,
     }),
     resave: false,
     saveUninitialized: true,
     cookie: {
-    ...(process.env.COOKIE_DOMAIN === 'localhost' ? { path: '/' } : {}),
-    ...(process.env.COOKIE_DOMAIN !== 'localhost' ? { domain: process.env.COOKIE_DOMAIN } : {}),
+    ...(process.env.COOKIE_DOMAIN === 'localhost:3000' ? { path: '/' } : {}),
+    ...(process.env.COOKIE_DOMAIN !== 'localhost:3000' ? { domain: process.env.COOKIE_DOMAIN } : {}),
     httpOnly: false,
     secure: false,
     sameSite: "lax",
