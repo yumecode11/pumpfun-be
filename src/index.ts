@@ -24,7 +24,7 @@ import path from "path";
 
 import * as routes from "./routes";
 import authMiddleware from "./middlewares/auth";
-import SupabaseStore from "./lib/SupabaseStore";
+import MongoStore from 'connect-mongo'
 import logger from "./utils/logger";
 import {EventData} from "./types/event";
 import './utils/message';
@@ -32,15 +32,14 @@ import process from "process";
 import redisClient from "./lib/redis";
 
 import dummyUpload from './utils/dummyUpload'; // TODO: remove this once we are able to upload to s3
+import { connectMongo } from './db/mongo';
 
 declare module 'express-session' {
     interface SessionData {
         wallet: string
-        verified: boolean
-        chain: string
-        role: string
+        username: string
+        bio: string
         token: string
-        messages?: string[]
     }
 }
 
@@ -109,22 +108,22 @@ const storage =  multerS3({
     }
 });
 const sessionMiddleware = session({
-    name: 'ballisticV2',
-    secret: 'ballistic!123@',
-    store: new SupabaseStore({
-        supabaseUrl: process.env.SUPABASE_URL as string,
-        supabaseKey: process.env.SUPABASE_KEY as string
+    name: process.env.COOKIE_NAME,
+    secret: process.env.COOKIE_SECRET as string,
+    store: MongoStore.create({
+        mongoUrl: process.env.MONGODB_URI,
     }),
     resave: false,
     saveUninitialized: true,
     cookie: {
-        domain: process.env.DOMAIN,
-        httpOnly: false,
-        secure: false,
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 Days
-    }
-})
+    ...(process.env.COOKIE_DOMAIN === 'localhost' ? { path: '/' } : {}),
+    ...(process.env.COOKIE_DOMAIN !== 'localhost' ? { domain: process.env.COOKIE_DOMAIN } : {}),
+    httpOnly: false,
+    secure: false,
+    sameSite: "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 Days
+  }
+});
 const fileFilter = (req: Express.Request, file: Express.MulterS3.File, cb: FileFilterCallback) => {
     const fileTypes = /jpeg|jpg|png|gif/;
     const extname = fileTypes.test(path.extname(file.originalname).toLowerCase());
@@ -143,6 +142,8 @@ if (!isDevelopment || isStaging) {
     app.set('trust proxy', '127.0.0.1');
 }
 
+connectMongo();
+
 app.use(cors({
     origin: function (origin, callback) {
         if (!origin || whitelist.indexOf(origin) !== -1) {
@@ -158,7 +159,7 @@ app.use(cors({
 app.use(sessionMiddleware)
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }))
-app.use(cookieParser('ballistic!123@'))
+app.use(cookieParser(process.env.COOKIE_SECRET))
 
 io.engine.use(sessionMiddleware);
 io.use((socket, next) => {
@@ -185,17 +186,11 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 app.all('/', async (req: any, res: any) => {
     return res.send('Are you lost ?')
 })
-app.use(function(req, res, next) {
-    const msgs = req.session.messages || [];
-    res.locals.messages = msgs;
-    res.locals.hasMessages = !! msgs.length;
-    req.session.messages = [];
-    next();
-});
-app.get('/session', routes.session)
-app.post('/login', routes.login)
-app.post('/logout', routes.logout)
-app.post('/verify', routes.verify)
+
+app.get('/auth/session', routes.session)
+app.post('/auth/login', routes.login)
+app.post('/auth/logout', routes.logout)
+// app.post('/verify', routes.verify)
 app.get('/search-coins', routes.searchCoins)
 app.get('/coin', routes.coin)
 app.get('/top-coin', routes.topCoin)

@@ -1,10 +1,9 @@
 import { Request, Response, NextFunction } from 'express'
 
 const authMiddleware = async (req: Request, res: Response, next: NextFunction ) => {
-  // TODO: enable this once we have auth session configured properly
-  // if (!req.session.wallet || !req.session.verified) {
-  //   return res.status(401).json({ error: 'Unauthorized' });
-  // }
+  if (!req.session.wallet) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
 
   return next();
 }
