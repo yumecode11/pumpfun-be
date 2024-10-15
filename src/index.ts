@@ -115,7 +115,7 @@ const sessionMiddleware = session({
         dbName: process.env.DB_NAME,
     }),
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
     cookie: {
     ...(process.env.COOKIE_DOMAIN === 'localhost:3000' ? { path: '/' } : {}),
     ...(process.env.COOKIE_DOMAIN !== 'localhost:3000' ? { domain: process.env.COOKIE_DOMAIN } : {}),
