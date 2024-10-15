@@ -1,11 +1,13 @@
 import { Request, Response } from "express";
 import fs from "fs";
+import { Keypair } from "@solana/web3.js";
 import { db } from "../db/mongo";
 
 const coinsCollection = db.collection("coins");
 
 const createCoin = async (req: Request, res: Response) => {
   const { name, ticker, description, twitter, telegram, website } = req.body;
+  const mintPublicKey = Keypair.generate().publicKey;
   // Payload to create new coin
   const newCoin = {
     name,
@@ -15,11 +17,10 @@ const createCoin = async (req: Request, res: Response) => {
     twitter,
     telegram,
     website,
+    pubkey: mintPublicKey.toString(),
     marketCap: 0,
-    replies: [],
-    trades: [],
-    created_at: new Date(),
-    created_by: "user_id_0",
+    createdAt: new Date(),
+    createdBy: req.session.wallet,
   };
 
   try {
