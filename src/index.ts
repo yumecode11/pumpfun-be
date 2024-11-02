@@ -191,24 +191,47 @@ app.all('/', async (req: any, res: any) => {
 app.get('/auth/session', routes.session)
 app.post('/auth/login', routes.login)
 app.post('/auth/logout', routes.logout)
-// app.post('/verify', routes.verify)
+
+/*
+ Search Coin
+ - Coin List
+ - Filter Coin List
+**/
 app.get('/search-coins', routes.searchCoins)
+
+/*
+Coin Detail
+ - Coin Detail Info
+ - Tansaction History
+**/
 app.get('/coin', routes.coin)
-app.get('/top-coin', routes.topCoin)
-app.get('/latest-transaction', routes.latestTransaction)
-app.get('/latest-coin-created', routes.latestCoinCreated)
-app.get('/users-to-follow', routes.usersToFollow)
-app.get('/user-profile', routes.userProfile)
 
 // use auth middleware for all endpoints below
 app.use(authMiddleware)
+
+/*
+Create Coin
+ - Create coin data
+**/
 app.post('/create-coin', dummyUpload.single('image'), routes.createCoin)
+
+/*
+Buy Coin
+ - Buy coin
+**/
 app.post('/buy', routes.buy)
+
+/*
+Sell Coin
+ - Sell coin
+**/
 app.post('/sell', routes.sell)
-app.post('/post-comment', routes.postComment)
-app.post('/post-contract-address', routes.postContractAddress)
-app.post('/update-user-profile', routes.updateUserProfile)
-app.post('/follow', routes.follow)
+
+/*
+Withdraw Coin
+ - 
+**/
+app.post('/withdraw', routes.sell)
 
 // Only rate limit the long running operations
 app.use(limiter)
