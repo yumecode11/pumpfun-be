@@ -1,28 +1,27 @@
 // Auth
-export { default as login } from './auth/login'
-export { default as logout } from './auth/logout'
+export { default as login } from "./auth/login";
+export { default as logout } from "./auth/logout";
 // export { default as verify } from './auth/verify'
-export { default as session } from './auth/session'
+export { default as session } from "./auth/session";
 
-export { default as upload } from './upload';
+export { default as upload } from "./upload";
 
-// Coin
-export { default as createCoin } from './create-coin';
-export { default as searchCoins } from './search-coins';
-export { default as coin } from './coin';
-export { default as topCoin } from './top-coin';
+// Coins
+export { default as createCoin } from "./coins/create-coin";
+export { default as searchCoins } from "./coins/search-coins";
+export { default as coin } from "./coins/coin";
+export { default as topCoin } from "./coins/top-coin";
+export { default as latestCoinCreated } from "./coins/latest-coin-created";
 
-// Transaction
-export { default as buy } from './buy';
-export { default as sell } from './sell';
-export { default as postComment } from './post-comment';
-export { default as postContractAddress } from './post-contract-address';
-export { default as latestTransaction } from './latest-transaction';
-export { default as latestCoinCreated } from './latest-coin-created';
+// Transactions
+export { default as buy } from "./transactions/buy";
+export { default as sell } from "./transactions/sell";
+export { default as postComment } from "./transactions/post-comment";
+export { default as postContractAddress } from "./transactions/post-contract-address";
+export { default as latestTransaction } from "./transactions/latest-transaction";
 
-// User
-export { default as usersToFollow } from './users-to-follow';
-export { default as userProfile } from './user-profile';
-export { default as updateUserProfile } from './update-user-profile';
-export { default as follow } from './follow';
-
+// Users
+export { default as usersToFollow } from "./users/users-to-follow";
+export { default as userProfile } from "./users/user-profile";
+export { default as updateUserProfile } from "./users/update-user-profile";
+export { default as follow } from "./users/follow";
