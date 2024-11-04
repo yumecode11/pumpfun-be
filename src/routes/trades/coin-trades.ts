@@ -4,6 +4,7 @@ import type {
   CoinTradesResponse,
 } from "types/coin-trades.type";
 import { coinsCollection, coinTradesCollection } from "../../db/mongo";
+import logger from "../../utils/logger";
 
 // Dummy function to create transaction-hash (tx_hash)
 const generateTxHash = () => {
@@ -55,9 +56,10 @@ const coinTrades = async ({
       },
     };
   } catch (error) {
+    logger.error("Error processing coin trades:", error);
     return {
       code: 500,
-      message: "Error processing coin purchase",
+      message: "Error processing coin trades",
       data: null,
     };
   }

@@ -13,12 +13,12 @@ export { default as coin } from "./coins/coin";
 export { default as topCoin } from "./coins/top-coin";
 export { default as latestCoinCreated } from "./coins/latest-coin-created";
 
-// Transactions
-export { default as buy } from "./transactions/buy";
-export { default as sell } from "./transactions/sell";
-export { default as postComment } from "./transactions/post-comment";
-export { default as postContractAddress } from "./transactions/post-contract-address";
-export { default as latestTransaction } from "./transactions/latest-transaction";
+// Trades/Transactions
+export { default as buy } from "./trades/buy";
+export { default as sell } from "./trades/sell";
+export { default as postComment } from "./trades/post-comment";
+export { default as postContractAddress } from "./trades/post-contract-address";
+export { default as latestTrades } from "./trades/latest-trades";
 
 // Users
 export { default as usersToFollow } from "./users/users-to-follow";

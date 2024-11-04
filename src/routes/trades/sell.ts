@@ -5,12 +5,13 @@ const sell = async (req: Request, res: Response) => {
   const { coin, wallet, amount } = req.body;
 
   if (!coin || !wallet || !amount) {
-    return res.status(400).json({ code: 400, message: "Bad request" });
+    return res.status(400).json({ message: "Bad request" });
   }
 
   const saveDb = await coinTrades({ type: "sell", coin, wallet, amount });
+  const { code, ...rest } = saveDb;
 
-  return res.status(saveDb.code).json(saveDb);
+  return res.status(code).json(rest);
 };
 
 export default sell;

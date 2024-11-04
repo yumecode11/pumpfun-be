@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { coinsCollection } from "../../db/mongo";
+import logger from "../../utils/logger";
 
 const searchCoins = async (req: Request, res: Response) => {
   const { keyword = "", page = 1, limit = 10 } = req.query;
@@ -24,7 +25,6 @@ const searchCoins = async (req: Request, res: Response) => {
     const totalPages = Math.ceil(totalDocuments / limitNumber);
 
     return res.status(200).json({
-      code: 200,
       message: "Success",
       data: {
         result,
@@ -37,8 +37,8 @@ const searchCoins = async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
+    logger.error("Error retrieving coins from database:", error);
     return res.status(500).json({
-      code: 500,
       message: "Error retrieving coins from database",
     });
   }

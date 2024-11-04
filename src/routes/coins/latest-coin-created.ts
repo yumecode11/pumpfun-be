@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 
 import { coinsCollection } from "../../db/mongo";
+import logger from "../../utils/logger";
 
 const latestCoinCreated = async (req: Request, res: Response) => {
   const size = parseInt(req.query.size as string, 10) || 1;
@@ -13,7 +14,6 @@ const latestCoinCreated = async (req: Request, res: Response) => {
       .toArray();
 
     return res.status(200).json({
-      code: 200,
       message: "Success",
       data: {
         result,
@@ -24,8 +24,8 @@ const latestCoinCreated = async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
+    logger.error("Error retrieving latest coins from database:", error);
     return res.status(500).json({
-      code: 500,
       message: "Error retrieving latest coins from database",
     });
   }

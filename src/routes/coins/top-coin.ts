@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 
 import { coinsCollection } from "../../db/mongo";
+import logger from "../../utils/logger";
 
 const topCoin = async (req: Request, res: Response) => {
   try {
@@ -12,19 +13,17 @@ const topCoin = async (req: Request, res: Response) => {
 
     if (result.length === 0) {
       return res.status(404).json({
-        code: 404,
         message: "No coins found",
       });
     }
 
     return res.status(200).json({
-      code: 200,
       message: "Success",
       data: result[0],
     });
   } catch (error) {
+    logger.error("Error retrieving top coin from database:", error);
     return res.status(500).json({
-      code: 500,
       message: "Error retrieving top coin from database",
     });
   }
