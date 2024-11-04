@@ -3,7 +3,7 @@ import { ObjectId } from "mongodb";
 import { coinsCollection, coinTradesCollection } from "../../db/mongo";
 import logger from "../../utils/logger";
 
-const coin = async (req: Request, res: Response) => {
+const coinDetail = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   if (!ObjectId.isValid(id)) {
@@ -37,4 +37,4 @@ const coin = async (req: Request, res: Response) => {
   }
 };
 
-export default coin;
+export default coinDetail;

@@ -9,7 +9,7 @@ export { default as upload } from "./upload";
 // Coins
 export { default as createCoin } from "./coins/create-coin";
 export { default as searchCoins } from "./coins/search-coins";
-export { default as coin } from "./coins/coin";
+export { default as coinDetail } from "./coins/coin-detail";
 export { default as topCoin } from "./coins/top-coin";
 export { default as latestCoinCreated } from "./coins/latest-coin-created";
 

@@ -202,7 +202,7 @@ app.post("/auth/login", routes.login);
 app.post("/auth/logout", routes.logout);
 
 app.get("/coins", routes.searchCoins);
-app.get("/coins/:id", routes.coin);
+app.get("/coins/:id", routes.coinDetail);
 
 // use auth middleware for all endpoints below
 app.use(authMiddleware);
