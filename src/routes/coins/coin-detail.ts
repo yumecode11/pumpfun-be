@@ -28,7 +28,8 @@ const coinDetail = async (req: Request, res: Response) => {
       message: "Success",
       data: {
         coin: coinDetail,
-        transactions: transactions,
+        trades: transactions,
+        threads: [],
       },
     });
   } catch (error) {

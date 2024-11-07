@@ -3,7 +3,11 @@ import type {
   CoinTradesArgs,
   CoinTradesResponse,
 } from "types/coin-trades.type";
-import { coinsCollection, coinTradesCollection } from "../../db/mongo";
+import {
+  coinsCollection,
+  coinTradesCollection,
+  mongoClient,
+} from "../../db/mongo";
 import logger from "../../utils/logger";
 
 // Dummy function to create transaction-hash (tx_hash)
@@ -17,21 +21,32 @@ const coinTrades = async ({
   wallet,
   amount,
 }: CoinTradesArgs): Promise<CoinTradesResponse> => {
+  if (!ObjectId.isValid(coin)) {
+    return {
+      code: 400,
+      message: "Invalid coin ID",
+      data: null,
+    };
+  }
+
+  const session = mongoClient.startSession();
   try {
-    // Payload
+    session.startTransaction();
+
+    // Payload for trade
     const newTrade = {
-      coin_id: coin,
+      coin_id: new ObjectId(coin),
       wallet,
       amount_in: type === "buy" ? parseFloat(amount) : 0,
       amount_out: type === "sell" ? parseFloat(amount) : 0,
-      tx_hash: generateTxHash(), // This should be replaced with a real tx hash
+      tx_hash: generateTxHash(),
       timestamp: new Date(),
     };
 
-    // Save to database
-    const result = await coinTradesCollection.insertOne(newTrade);
+    // Insert trade into coinTradesCollection
+    const result = await coinTradesCollection.insertOne(newTrade, { session });
 
-    // Update coin
+    // Update coin market cap
     const marketCapUpdateValue =
       type === "buy" ? parseFloat(amount) : -parseFloat(amount);
     const updateResult = await coinsCollection.updateOne(
@@ -39,29 +54,40 @@ const coinTrades = async ({
       {
         $inc: { market_cap: marketCapUpdateValue },
         $set: { updated_at: new Date() },
-      }
+      },
+      { session }
     );
 
-    // Handle error of update coin
     if (!updateResult.modifiedCount) {
       throw new Error("Failed to update coin market cap.");
     }
+
+    // Commit transaction
+    await session.commitTransaction();
 
     return {
       code: 200,
       message: "Success",
       data: {
-        tradeId: result.insertedId as unknown as string,
-        ...newTrade,
+        tradeId: result.insertedId.toString(),
+        coin_id: newTrade.coin_id.toString(),
+        wallet: newTrade.wallet,
+        amount_in: newTrade.amount_in,
+        amount_out: newTrade.amount_out,
+        tx_hash: newTrade.tx_hash,
+        timestamp: newTrade.timestamp,
       },
     };
   } catch (error) {
+    await session.abortTransaction();
     logger.error("Error processing coin trades:", error);
     return {
       code: 500,
       message: "Error processing coin trades",
       data: null,
     };
+  } finally {
+    session.endSession();
   }
 };
 
