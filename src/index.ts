@@ -162,7 +162,7 @@ app.use(
       }
     },
     credentials: true,
-    methods: ["POST", "GET"],
+    methods: ["POST", "GET", "PATCH"],
   })
 );
 
@@ -206,7 +206,8 @@ app.get("/coins/:id", routes.coinDetail);
 
 // use auth middleware for all endpoints below
 app.use(authMiddleware);
-app.post("/create-coin", dummyUpload.single("image"), routes.createCoin);
+app.post("/launch/initiate", dummyUpload.single("image"), routes.initiateCoin);
+app.patch("/launch/verify", routes.verifyCoin);
 app.post("/buy", routes.buy);
 app.post("/sell", routes.sell);
 app.post("/withdraw", routes.sell);
