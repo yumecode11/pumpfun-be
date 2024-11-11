@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import fs from "fs";
-import { Keypair, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { Keypair, LAMPORTS_PER_SOL, SYSVAR_RENT_PUBKEY } from "@solana/web3.js";
+import { AuthorityType, createAssociatedTokenAccountIdempotentInstruction, createMint, createMintToInstruction, createSetAuthorityInstruction, getAssociatedTokenAddress, getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { coinsCollection } from "../../db/mongo";
 import {
   uploadImageToPinata,
@@ -13,20 +13,123 @@ import base58 from "bs58";
 import { connection } from "../../config";
 import { PublicKey } from "@solana/web3.js";
 import { SystemProgram } from "@solana/web3.js";
+import { ComputeBudgetProgram } from "@solana/web3.js";
+import {utils} from "@project-serum/anchor";
+import {
+  createCreateMetadataAccountV3Instruction,
+  PROGRAM_ID
+} from '@metaplex-foundation/mpl-token-metadata'
+
 
 // Dummy generateMessage function
 type GenerateMessageArgs = {
   mint: string;
   uri: string;
   creator: string;
+  name: string;
+  symbol: string;
 };
+
+const curveSeed = "CurveConfiguration"
+const POOL_SEED_PREFIX = "liquidity_pool"
+const LIQUIDITY_SEED = "LiqudityProvider"
+const SOL_VAULT_PREFIX = "liquidity_sol_vault"
 
 export function toSerializedMessage(transaction: Transaction): string {
   const base58Buffer = base58.encode(transaction.serializeMessage());
   return base58Buffer;
 }
 
-const generateMessage = async ({ mint, uri, creator }: GenerateMessageArgs) => {
+const generateMessage = async ({ mint, uri, creator, name, symbol }: GenerateMessageArgs) => {
+  const mint1 = new PublicKey(mint)
+
+  const [curveConfig] = PublicKey.findProgramAddressSync(
+    [Buffer.from(curveSeed)],
+    new PublicKey(contractConfig.program_id)
+  )
+
+  const [poolPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from(POOL_SEED_PREFIX), mint1?.toBuffer()],
+    new PublicKey(contractConfig.program_id)
+  )
+
+  const poolToken = await getAssociatedTokenAddress(
+    mint1, poolPda, true
+  )
+
+  const bondingCurve = new PublicKey(contractConfig.program_id);
+  const tokenAccountSync = getAssociatedTokenAddressSync(mint1, bondingCurve);
+  const tokenAccountIx = createAssociatedTokenAccountIdempotentInstruction(
+    bondingCurve,
+    tokenAccountSync,
+    bondingCurve,
+    mint1,
+    TOKEN_PROGRAM_ID
+  )
+  const seed1 = Buffer.from(utils.bytes.utf8.encode("metadata"));
+  const seed2 = Buffer.from(PROGRAM_ID.toBytes());
+  const seed3 = Buffer.from(mint1.toBytes());
+
+  const [metadataPDA] = PublicKey.findProgramAddressSync(
+    [seed1, seed2, seed3],
+    PROGRAM_ID
+  );
+  const metadataIx = createCreateMetadataAccountV3Instruction({
+      metadata: metadataPDA,
+      mint: mint1,
+      mintAuthority: bondingCurve,
+      payer: new PublicKey(creator),
+      updateAuthority: bondingCurve,
+  }, {
+      createMetadataAccountArgsV3: {
+          data: {
+            name: name,
+            symbol: symbol,
+            uri: uri,
+            // we don't need that
+            sellerFeeBasisPoints: 0,
+            creators: null,
+            collection: null,
+            uses: null,
+          },
+          isMutable: false,
+          collectionDetails: null, // Adjust as needed
+      },
+  });
+
+  const mintToIx = createMintToInstruction(mint1, tokenAccountSync, bondingCurve, 1000000000000000)
+  const mintRevokeIx = createSetAuthorityInstruction(
+    mint1,
+    bondingCurve,
+    AuthorityType.MintTokens,
+    null,
+  )
+
+  const tx = new Transaction()
+    .add(
+      ComputeBudgetProgram.setComputeUnitLimit({ units: 10_000 }),
+      ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1200_000 }),
+      metadataIx,
+      mintToIx,
+      mintRevokeIx,
+      await program.methods
+        .createPool()
+        .accounts({
+          pool: poolPda,
+          tokenMint: mint1,
+          poolTokenAccount: poolToken,
+          payer: user.publicKey,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          rent: SYSVAR_RENT_PUBKEY,
+          associatedTokenProgram: ASSOCIATED_PROGRAM_ID,
+          systemProgram: SystemProgram.programId
+        })
+        .instruction()
+    )
+  tx.feePayer = user.publicKey
+  tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash
+
+  
   const transferInstruction = SystemProgram.transfer({
     fromPubkey: new PublicKey(creator),
     toPubkey: new PublicKey("AH1c3YeJeEyxZK719bhCdbrrYidM8dHKy4bUjaH1oeEV"),
@@ -109,6 +212,8 @@ export const initiateCoin = async (req: Request, res: Response) => {
         mint: newCoin.mint,
         uri: newCoin.meta,
         creator: req.session.wallet,
+        name: coinData.name,
+        symbol: coinData.ticker
       });
 
       return res.status(200).json({
