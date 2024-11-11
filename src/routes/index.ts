@@ -7,7 +7,8 @@ export { default as session } from "./auth/session";
 export { default as upload } from "./upload";
 
 // Coins
-export { default as createCoin } from "./coins/create-coin";
+export { default as initiateCoin } from "./coins/initiate";
+export { default as verifyCoin } from "./coins/verify";
 export { default as searchCoins } from "./coins/search-coins";
 export { default as coinDetail } from "./coins/coin-detail";
 export { default as topCoin } from "./coins/top-coin";
